@@ -1,0 +1,53 @@
+"""
+This class is responsible for storing all the information about current state of ERAGame. It will also be responsible
+for determining the valid moves at the current state. It will also keep a move log.
+"""
+
+class GameState():
+    def __init__(self):
+        # Definition of game board, 4x4 2d list, each of elements has 2 characters
+        # "--" represents blank space
+        self.board = [
+            ["--", "--", "--", "--"],
+            ["--", "--", "--", "--"],
+            ["--", "--", "--", "--"],
+            ["--", "--", "--", "--"]]
+        # definition of stones bin, 4x4 2d list, each of elements has 2 characters
+        # The first number represents row of stone position
+        # The second number represents column of stone position
+        self.bin = [
+            ["00", "01", "02", "03"],
+            ["10", "11", "12", "13"],
+            ["20", "21", "22", "23"],
+            ["30", "31", "32", "33"]]
+        self.player1ToMove = True # Sets default turn for player
+        self.moveLog = []  # Shows at what row and column was stone placed
+
+    def makeMove(self, move):
+        self.bin[move.startRow][move.startCol] = "--"
+        self.board[move.endRow][move.endCol] = move.pieceMoved
+        self.moveLog.append(move)  # Log the move so e can undo it later
+        self.player1ToMove = not self.player1ToMove  # Swap players
+class Move():
+    #  Maps keys to values
+    #  Key : value
+    ranksToRows = {"1": 3, "2": 2, "3": 1, "4": 0}
+    rowsToRanks = {v: k for k, v in ranksToRows.items()}
+    filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3}
+    colsToFiles = {v: k for k, v in filesToCols.items()}
+
+    def __init__(self, startSq, endSq, board, bin):
+        self.startRow = startSq[0]
+        self.startCol = startSq[1]
+        self.endRow = endSq[0]
+        self.endCol = endSq[1]
+        self.pieceMoved = board[self.startRow][self.startCol]
+        self.pieceCaptured = bin[self.endRow][self.endCol]
+
+    def getERAGameNotation(self):
+        #  You can add to make this like real CHESS BUT NOT ERA GAME
+        return self.getRankFile(startRow, startCol) + self.getRankFile(self.endRow, self.endCol)
+
+
+    def getRankFile(self, r, c):
+        return self.colsToFiles[c] + self.rowsToRanks[r]
