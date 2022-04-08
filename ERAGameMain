@@ -1,0 +1,109 @@
+"""
+This is main driver file. It will be responsible for handling user input and displaying the current GameState object
+"""
+
+import pygame as p
+from ERAGame import ERAGameEngine
+
+WIDTH = 256
+HEIGHT = 640
+DIMENSION = 4  # Dimension of board either stones bin
+SQ_SIZE = 256 / DIMENSION
+MAX_FPS = 15  # for animations later on
+IMAGES = {}
+GAP=5
+
+"""
+Initialize a global dictionary of images. This will be called exactly only once in the main.
+"""
+def loadImages():
+    pieces = ["00", "01", "02", "03", "10", "11", "12", "13", "20", "21", "22", "23", "30", "31", "32", "33"]
+    for piece in pieces:
+        IMAGES[piece] = p.transform.scale(p.image.load("stones/" + piece + ".png"),(SQ_SIZE-(2*GAP), SQ_SIZE-(2*GAP)))
+    #  Note: We can call image by saying "IMAGES["01"]"
+
+
+"""
+The main driver for our code. This will handle user input and updating the graphics.
+"""
+
+def main():
+    p.init()
+    screen = p.display.set_mode((WIDTH,HEIGHT))
+    clock = p.time.Clock
+    screen.fill(p.Color("white"))
+    gs = ERAGameEngine.GameState()  # Calls GameState and all stuff from there and naming it as "gs" here
+    loadImages()  # Only do this once, before the while loop
+    running = True  # Till app runs
+    sqSelected = ()  # No square is selected, keep track of the last click of the use (tuple: (row, cow))
+    playerClicks = []  # Keep track of the player clicks (two tuples: [(6, 4),(2, 7)]
+    while running:
+        for e in p.event.get():
+            if e.type == p.QUIT: # Quits the code, if quit window is hit.
+                running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()  # (x, y) location of mouse
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                if sqSelected == (row, col):  #  User clicked the same square twice
+                    sqSelected = ()  # Deselect
+                    playerClicks = [] # Clear player clicks
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected)  # Append for both 1st and 2nd clicks
+                if len(playerClicks) == 2:  # After 2nd click
+                    move = ERAGameEngine.Move(playerClicks[0], playerClicks[1], gs.bin, gs.board)
+                    print(move.getERAGameNotation())
+                    gs.makeMove(move)
+                    sqSelected = ()  # Resets the user clicks
+                    playerClicks = []
+
+        drawGameState(screen, gs)
+        # clock.tick(MAX_FPS)
+        p.display.flip()
+"""
+Responsible for all the graphics within a current game state.
+"""
+
+def drawGameState(screen, gs):
+    drawBoard(screen) # Draw squares on the board
+    drawPieces(screen, gs.board)
+    drawBin(screen) # Draw squares on the stones bin
+    drawPieces(screen, gs.bin) # Draw pieces (images) on the stones bin
+
+"""
+Draw the squares on the board
+"""
+def drawBoard(screen):
+    colors = [p.Color("gray"), p.Color("dark gray")]
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            color = colors[((r+c)%2)]
+            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+"""
+Draw the squares on the board
+"""
+def drawBin(screen):
+    colors = [p.Color("gray"), p.Color("light gray")]
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            color = colors[((r+c)%2)]
+            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE+384, SQ_SIZE, SQ_SIZE))
+
+"""
+Draw the pieces on the stones bin, using the current GameState.bin
+"""
+def drawPieces(screen, bin):
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            piece = bin[r][c]
+            if piece != "--":  # Not empty square
+                screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE+GAP, r*SQ_SIZE+384+GAP, SQ_SIZE, SQ_SIZE))
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+main()
